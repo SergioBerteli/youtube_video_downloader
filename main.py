@@ -85,7 +85,7 @@ class JanelaPrincipal(QMainWindow):
         url_txt = self.campo_url.text()
         formato = "m4a" if self.radio_mp3.isChecked() else "mp4"
         if not url_txt.startswith("http"):
-            url_txt = "http://" + url
+            url_txt = "http://" + url_txt
         resultado = subprocess.run([".\\yt-dlp\\yt-dlp.exe", "-P", ".\\videos\\", "-f", formato, url_txt], capture_output=True, text=True)
         self.baixado_msg.exec()
 
