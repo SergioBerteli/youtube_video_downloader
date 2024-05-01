@@ -1,0 +1,2 @@
+Interface feita utilizando a biblioteca PySide 6. O processo de download é feito pelo yt-dlp (https://github.com/yt-dlp/yt-dlp).
+Para utilizar essa ferramenta, execute-a e navegue até o vídeo desejado. Logo após entrar na página do vídeo, selecione o tipo de formato e clique em baixar. A aplicação irá pausar por alguns segundos enquanto baixa o vídeo e, quando o download for concluído, uma mensagem aparecerá
