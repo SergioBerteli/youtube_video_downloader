@@ -1,9 +1,14 @@
 import subprocess
-from PySide6.QtCore import QUrl, Slot
-from PySide6.QtWidgets import (QApplication, QLineEdit, QMainWindow, QPushButton, QToolBar, QCheckBox, QButtonGroup, QMessageBox)
+from PySide6.QtCore import QUrl, Slot, QObject, Signal
+from PySide6.QtWidgets import (QApplication, QLineEdit, QMainWindow, QPushButton, QToolBar, QCheckBox, QButtonGroup, QMessageBox, QFileDialog, QProgressBar)
 from PySide6.QtWebEngineCore import QWebEnginePage
 from PySide6.QtWebEngineWidgets import QWebEngineView
 import sys
+import threading
+
+class GerenciadorDeMensagens(QObject):
+    sucesso_msg = Signal()
+    erro_msg = Signal()
 
 class JanelaPrincipal(QMainWindow):
 
@@ -47,6 +52,10 @@ class JanelaPrincipal(QMainWindow):
         self.barra_de_tarefas.addWidget(self.radio_mp4)
         self.barra_de_tarefas.addWidget(self.radio_mp3)
 
+        self.gerenciador_msg = GerenciadorDeMensagens()
+        self.gerenciador_msg.sucesso_msg.connect(self.mostra_msg_sucesso)
+        self.gerenciador_msg.erro_msg.connect(self.mostra_msg_erro)
+
         self.pag_nav = QWebEngineView()
         self.setCentralWidget(self.pag_nav)
         url_inicial = "http://youtube.com"
@@ -54,9 +63,6 @@ class JanelaPrincipal(QMainWindow):
         self.pag_nav.load(QUrl(url_inicial))
         self.pag_nav.page().titleChanged.connect(self.setWindowTitle)
         self.pag_nav.page().urlChanged.connect(self.mudanca_url)
-
-        self.baixado_msg = QMessageBox()
-        self.baixado_msg.setText("Download terminado!")
 
 
     Slot()
@@ -86,8 +92,27 @@ class JanelaPrincipal(QMainWindow):
         formato = "m4a" if self.radio_mp3.isChecked() else "mp4"
         if not url_txt.startswith("http"):
             url_txt = "http://" + url_txt
-        resultado = subprocess.run([".\\yt-dlp\\yt-dlp.exe", "-P", ".\\videos\\", "-f", formato, url_txt], capture_output=True, text=True)
-        self.baixado_msg.exec()
+        caminho_download = QFileDialog.getExistingDirectory(self, "Selecione a pasta onde o video deverá ser baixado")
+        if caminho_download:
+            comandos = [".\\yt-dlp\\yt-dlp.exe", "-P", caminho_download, "-f", formato, url_txt]
+            threading.Thread(target=self.executar_processo_dowload, args=[comandos]).start()
+
+    def executar_processo_dowload(self, comandos):
+        resultado = subprocess.run(comandos, capture_output=True, text=True)
+        if resultado.returncode == 0:
+            self.gerenciador_msg.sucesso_msg.emit()
+        else:
+            self.gerenciador_msg.erro_msg.emit()
+
+    
+    Slot()
+    def mostra_msg_sucesso(self):
+        QMessageBox.information(self, "Download concluído", "O video foi baixado com sucesso!")
+
+    Slot()
+    def mostra_msg_erro(self):
+        QMessageBox.information(self, "Falha no download", "Ocorreu um erro ao tentar baixar o video.")
+    
 
 
 
